@@ -13,7 +13,7 @@ struct UserProfile: Codable {
     var followers: Followers
     var href: String
     var id: String
-    var images: [UserImage]
+    var images: [Image]
     var product, type, uri: String
     var explicitContent: [String: Bool]
 
@@ -49,7 +49,7 @@ struct Followers: Codable {
     var total: Int
 }
 
-struct UserImage: Codable {
+struct Image: Codable {
     var height: Int?
     var url: String
     var width: Int?
