@@ -12,10 +12,10 @@ final class AuthManager {
     static let shared = AuthManager()
     private let keychain = Keychain(service: "app.dscyrescotti.Spotify")
     
+    private var refreshingToken = false
+    
     private init() {
-        refreshIfNeeded { success in
-            print(success)
-        }
+        refreshIfNeeded { _ in }
     }
     
     var signInURL: URL? {
@@ -136,16 +136,34 @@ final class AuthManager {
         UserDefaults.standard.setValue(Date().addingTimeInterval(TimeInterval(result.expiresIn)), forKey: KeychainKeys.expiration_date.rawValue)
     }
     
+    private var onRefreshingBlocks: [(String) -> Void] = []
+    
+    func withValidToken(completion: @escaping (String) -> Void) {
+        guard !refreshingToken else {
+            onRefreshingBlocks.append(completion)
+            return
+        }
+        if shouldRefreshToken {
+            refreshIfNeeded { [weak self] success in
+                if let token = self?.accessToken {
+                    completion(token)
+                }
+            }
+        } else if let token = self.accessToken {
+            completion(token)
+        }
+    }
+    
     func refreshIfNeeded(completion: @escaping (Bool) -> Void) {
-//        guard shouldRefreshToken else {
-//            completion(true)
-//            return
-//        }
+        guard !refreshingToken else { return }
+        guard shouldRefreshToken else {
+            completion(true)
+            return
+        }
         guard let refreshToken = refreshToken else {
             return
         }
         guard let url = refreshTokenURL(token: refreshToken) else {
-            print("No refresh token api url")
             completion(false)
             return
         }
@@ -157,9 +175,10 @@ final class AuthManager {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("Basic \(base64String)", forHTTPHeaderField: "Authorization")
         request.httpMethod = "POST"
+        refreshingToken = true
         let task = URLSession.shared.dataTask(with: request) { [weak self] (data, _, error) in
+            self?.refreshingToken = false
             guard let data = data, error == nil else {
-                print("Got error")
                 completion(false)
                 return
             }
@@ -167,9 +186,10 @@ final class AuthManager {
             do {
                 let result = try JSONDecoder().decode(AuthResult.self, from: data)
                 try self?.cacheToken(result: result)
+                self?.onRefreshingBlocks.forEach { $0(result.accessToken) }
+                self?.onRefreshingBlocks.removeAll()
                 completion(true)
             } catch {
-                print("Error")
                 print(error.localizedDescription)
                 completion(false)
             }

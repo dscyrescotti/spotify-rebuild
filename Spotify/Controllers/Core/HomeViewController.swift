@@ -15,6 +15,10 @@ class HomeViewController: UIViewController {
         setUp()
     }
 
+    @objc func tappedSettings() {
+        let vc = SettingViewController()
+        navigationController?.pushViewController(vc, animated: true)
+    }
 
 }
 
@@ -23,5 +27,6 @@ extension HomeViewController {
         view.backgroundColor = .systemBackground
         title = "Home"
         navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gear"), style: .plain, target: self, action: #selector(tappedSettings))
     }
 }
