@@ -7,6 +7,10 @@
 
 import UIKit
 
-class FeaturePlaylistCell: UICollectionViewCell {
+class FeaturePlaylistCell: UICollectionViewCell, BrowseCell {
     static let identifier = "FeaturePlaylistCell"
+    
+    struct Model {
+        
+    }
 }

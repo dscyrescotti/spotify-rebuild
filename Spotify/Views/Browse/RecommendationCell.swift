@@ -7,6 +7,10 @@
 
 import UIKit
 
-class RecommendationCell: UICollectionViewCell {
+class RecommendationCell: UICollectionViewCell, BrowseCell {
     static let identifier = "RecommendationCell"
+    
+    struct Model {
+        
+    }
 }

@@ -9,16 +9,13 @@ import UIKit
 
 class HomeViewController: UIViewController {
     
-    private var collectionView: UICollectionView = {
-        let layout = UICollectionViewCompositionalLayout { (sectionIndex, _) -> NSCollectionLayoutSection? in
-            HomeLayout.init(rawValue: sectionIndex)?.createLayoutSection
+    private var sections = [HomeSection]() {
+        didSet {
+            collectionView.reloadData()
         }
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.showsVerticalScrollIndicator = false
-        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "cell")
-        collectionView.backgroundColor = .systemBackground
-        return collectionView
-    }()
+    }
+    
+    private var collectionView: UICollectionView!
     
     private let spinner: UIActivityIndicatorView = {
         let spinner = UIActivityIndicatorView(style: .medium)
@@ -39,27 +36,24 @@ class HomeViewController: UIViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     
-    enum HomeLayout: Int {
-        case newRelease = 0
-        case featurePlaylist = 1
-        case recommendations = 2
+    enum HomeSection {
+        case newRelease([NewReleaseCell.Model])
+        case featurePlaylist([FeaturePlaylistCell.Model])
+        case recommendations([RecommendationCell.Model])
     }
-
 }
 
 extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        10
+        sections[section].count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath)
-        cell.backgroundColor = .red
-        return cell
+        sections[indexPath.section].generateCell(collectionView, indexPath: indexPath)
     }
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        3
+        sections.count
     }
 }
 
@@ -70,6 +64,18 @@ extension HomeViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gear"), style: .plain, target: self, action: #selector(tappedSettings))
         
+        
+        let layout = UICollectionViewCompositionalLayout { [weak self] (index, _) -> NSCollectionLayoutSection? in
+            self?.sections[index].createLayoutSection
+        }
+        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.register(NewReleaseCell.self, forCellWithReuseIdentifier: NewReleaseCell.identifier)
+        collectionView.register(FeaturePlaylistCell.self, forCellWithReuseIdentifier: FeaturePlaylistCell.identifier)
+        collectionView.register(RecommendationCell.self, forCellWithReuseIdentifier: RecommendationCell.identifier)
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "cell")
+        collectionView.backgroundColor = .systemBackground
+        
         view.addSubview(collectionView)
         view.addSubview(spinner)
         collectionView.delegate = self
@@ -77,15 +83,59 @@ extension HomeViewController {
     }
     
     func fetchData() {
+        let group = DispatchGroup()
+        group.enter()
+        group.enter()
+        group.enter()
+        var newRelease: HomeSection?
+        var featurePlaylist: HomeSection?
+        var recommendation: HomeSection?
+        
         DispatchQueue.global(qos: .userInitiated).async {
-            ApiManger.shared.getRecommendedGenres { result in
+            ApiManger.shared.getAllNewReleases { result in
+                DispatchQueue.main.async {
+                    defer { group.leave() }
+                    switch result {
+                    case .success(let model):
+                        newRelease = .newRelease(model.models)
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                    }
+                }
+            }
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            ApiManger.shared.getFeaturePlaylists { [weak self] result in
+                DispatchQueue.main.async {
+                    defer { group.leave() }
+                    switch result {
+                    case .success(let model):
+                        break
+//                        featurePlaylist = .featurePlaylist([])
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                    }
+                }
+            }
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            ApiManger.shared.getRecommendedGenres { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let model):
                         let genres = Set(model.genres.shuffled()[0...4])
                         DispatchQueue.global(qos: .userInitiated).async {
                             ApiManger.shared.getRecommendations(genres: genres) { result in
-                                print(result)
+                                DispatchQueue.main.async {
+                                    defer { group.leave() }
+                                    switch result {
+                                    case .success(let model):
+                                        break
+//                                        recommendation = .recommendations([])
+                                    case .failure(let error):
+                                        print(error.localizedDescription)
+                                    }
+                                }
                             }
                         }
                     case .failure(let error):
@@ -94,6 +144,20 @@ extension HomeViewController {
                 }
             }
         }
+        
+        group.notify(queue: .main) {
+            if let newRelease = newRelease {
+                self.sections.append(newRelease)
+            }
+            if let featurePlaylist = featurePlaylist {
+                self.sections.append(featurePlaylist)
+            }
+            if let recommendation = recommendation {
+                self.sections.append(recommendation)
+            }
+            self.collectionView.reloadData()
+        }
+        
     }
     
     override func viewDidLayoutSubviews() {
@@ -104,7 +168,7 @@ extension HomeViewController {
 }
 
 
-extension HomeViewController.HomeLayout {
+extension HomeViewController.HomeSection {
     var createLayoutSection: NSCollectionLayoutSection {
         switch self {
         case .newRelease:
@@ -150,4 +214,32 @@ extension HomeViewController.HomeLayout {
         return section
     }
     
+    var count: Int {
+        switch self {
+        case .newRelease(let models):
+            return models.count
+        case .featurePlaylist(let models):
+            return models.count
+        case .recommendations(let models):
+            return models.count
+        }
+    }
+    
+    func generateCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
+        switch self {
+        case .newRelease(let models):
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NewReleaseCell.identifier, for: indexPath) as? NewReleaseCell else { fatalError("NewReleaseCell is not found.") }
+            let model = models[indexPath.item]
+            cell.configure(model: model)
+            return cell
+        case .featurePlaylist:
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FeaturePlaylistCell.identifier, for: indexPath) as? FeaturePlaylistCell else { fatalError("FeaturePlaylistCell is not found.") }
+            cell.backgroundColor = .systemRed
+            return cell
+        case .recommendations:
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: RecommendationCell.identifier, for: indexPath) as? RecommendationCell else { fatalError("RecommendationCell is not found.") }
+            cell.backgroundColor = .systemBlue
+            return cell
+        }
+    }
 }
