@@ -50,6 +50,9 @@ struct AudioTrack: Codable {
         case trackNumber = "track_number"
         case type, uri
     }
+    var model: RecommendationCell.Model {
+        RecommendationCell.Model(id: id, name: name, artist: artists.first?.name ?? "Unknown", artworkURL: URL(string: album.images.first?.url ?? ""))
+    }
 }
 
 struct ExternalIDS: Codable {

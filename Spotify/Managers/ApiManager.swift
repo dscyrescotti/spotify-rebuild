@@ -18,99 +18,63 @@ final class ApiManger {
         case unableToFetch
     }
     
+    func getPlaylistDetails(playlist: Playlist, completion: @escaping (Result<PlaylistDetails, Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "playlists/\(playlist.id)")), method: .GET) { request in
+            self.fetchData(PlaylistDetails.self, request: request, completion: completion)
+        }
+    }
+    
+    func getAlbumDetails(album: Album, completion: @escaping (Result<AlbumDetails, Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "albums/\(album.id)")), method: .GET) { request in
+            self.fetchData(AlbumDetails.self, request: request, completion: completion)
+        }
+    }
+    
     func getCurrentUserProfile(completion: @escaping (Result<UserProfile, Error>) -> Void) {
-        createRequest(url: URL(string: url(appending: "me")), method: .GET) { baseRequest in
-            let task = URLSession.shared.dataTask(with: baseRequest) { (data, _, error) in
-                guard let data = data, error == nil else {
-                    completion(.failure(ApiError.unableToFetch))
-                    return
-                }
-                do {
-                    let profile = try JSONDecoder().decode(UserProfile.self, from: data)
-                    completion(.success(profile))
-                } catch {
-                    completion(.failure(error))
-                }
-            }
-            task.resume()
+        createRequest(url: URL(string: url(appending: "me")), method: .GET) { request in
+            self.fetchData(UserProfile.self, request: request, completion: completion)
         }
     }
     
     func getAllNewReleases(completion: @escaping (Result<NewRelease, Error>) -> Void) {
-        createRequest(url: URL(string: url(appending: "browse/new-releases?limit=50")), method: .GET) { baseRequest in
-            let task = URLSession.shared.dataTask(with: baseRequest) { (data, _, error) in
-                guard let data = data, error == nil else {
-                    completion(.failure(ApiError.unableToFetch))
-                    return
-                }
-                do {
-                    let newRelease = try JSONDecoder().decode(NewRelease.self, from: data)
-                    completion(.success(newRelease))
-                } catch {
-                    completion(.failure(error))
-                }
-            }
-            task.resume()
+        createRequest(url: URL(string: url(appending: "browse/new-releases?limit=50")), method: .GET) { request in
+            self.fetchData(NewRelease.self, request: request, completion: completion)
         }
     }
     
     func getFeaturePlaylists(completion: @escaping (Result<FeaturePlaylist, Error>) -> Void) {
-        createRequest(url: URL(string: url(appending: "browse/featured-playlists?limit=50")), method: .GET) { baseRequest in
-            let task = URLSession.shared.dataTask(with: baseRequest) { (data, _, error) in
-                guard let data = data, error == nil else {
-                    completion(.failure(ApiError.unableToFetch))
-                    return
-                }
-                do { 
-                    let playlists = try JSONDecoder().decode(FeaturePlaylist.self, from: data)
-                    completion(.success(playlists))
-                } catch {
-                    completion(.failure(error))
-                }
-            }
-            task.resume()
+        createRequest(url: URL(string: url(appending: "browse/featured-playlists?limit=50")), method: .GET) { request in
+            self.fetchData(FeaturePlaylist.self, request: request, completion: completion)
         }
     }
     
     func getRecommendedGenres(completion: @escaping (Result<RecommendedGenres, Error>) -> Void) {
-        createRequest(url: URL(string: url(appending: "recommendations/available-genre-seeds")), method: .GET) { baseRequest in
-            let task = URLSession.shared.dataTask(with: baseRequest) { (data, _, error) in
-                guard let data = data, error == nil else {
-                    completion(.failure(ApiError.unableToFetch))
-                    return
-                }
-                do {
-                    let genres = try JSONDecoder().decode(RecommendedGenres.self, from: data)
-                    completion(.success(genres))
-                } catch {
-                    completion(.failure(error))
-                }
-            }
-            task.resume()
+        createRequest(url: URL(string: url(appending: "recommendations/available-genre-seeds")), method: .GET) { request in
+            self.fetchData(RecommendedGenres.self, request: request, completion: completion)
         }
     }
     
     func getRecommendations(genres: Set<String>, completion: @escaping (Result<Recommendations, Error>) -> Void) {
         let seeds = genres.joined(separator: ",")
-        createRequest(url: URL(string: url(appending: "recommendations?seed_genres=\(seeds)")), method: .GET) { baseRequest in
-            print("Recommendations")
-            let task = URLSession.shared.dataTask(with: baseRequest) { (data, _, error) in
-                print("URL - recommendations")
-                print(String(data: data ?? Data(), encoding: .utf8))
-                guard let data = data, error == nil else {
-                    completion(.failure(ApiError.unableToFetch))
-                    return
-                }
-                do {
-                    let recommendations = try JSONDecoder().decode(Recommendations.self, from: data)
-                    print(recommendations)
-                    completion(.success(recommendations))
-                } catch {
-                    completion(.failure(error))
-                }
-            }
-            task.resume()
+        createRequest(url: URL(string: url(appending: "recommendations?seed_genres=\(seeds)")), method: .GET) { request in
+            self.fetchData(Recommendations.self, request: request, completion: completion)
         }
+    }
+    
+    private func fetchData<T: Codable>(_ type: T.Type, request: URLRequest, completion: @escaping (Result<T, Error>) -> Void) {
+        let task = URLSession.shared.dataTask(with: request) { (data, _, error) in
+            guard let data = data, error == nil else {
+                completion(.failure(ApiError.unableToFetch))
+                return
+            }
+            do {
+                let model = try JSONDecoder().decode(type, from: data)
+                completion(.success(model))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+        task.resume()
     }
     
     enum URLMethod: String {

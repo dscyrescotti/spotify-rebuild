@@ -9,9 +9,6 @@ import Foundation
 
 struct NewRelease: Codable {
     var albums: Albums
-    var models: [NewReleaseCell.Model] {
-        albums.items.map { NewReleaseCell.Model(id: $0.id, name: $0.name, artworkURL: URL(string: $0.images.first?.url ?? ""), totalTracks: $0.totalTracks, artistName: $0.artists.first?.name ?? "Unknown")}
-    }
 }
 
 struct Albums: Codable {
@@ -42,6 +39,10 @@ struct Album: Codable {
         case externalUrls = "external_urls"
         case href, id, images, name, type, uri
         case totalTracks = "total_tracks"
+    }
+    
+    var model: NewReleaseCell.Model {
+        NewReleaseCell.Model(id: id, name: name, artworkURL: URL(string: images.first?.url ?? ""), totalTracks: totalTracks, artistName: artists.first?.name ?? "Unknown")
     }
 }
 

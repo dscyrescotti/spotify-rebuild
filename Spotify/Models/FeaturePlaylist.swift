@@ -31,7 +31,6 @@ struct Playlist: Codable {
     var images: [Image]
     var name: String
     var owner: Owner
-//    var itemPublic: String?
     var snapshotID: String
     var tracks: Tracks
     var type, uri: String
@@ -41,9 +40,12 @@ struct Playlist: Codable {
         case itemDescription = "description"
         case externalUrls = "external_urls"
         case href, id, images, name, owner
-//        case itemPublic = "public"
         case snapshotID = "snapshot_id"
         case tracks, type, uri
+    }
+    
+    var model: FeaturePlaylistCell.Model {
+        FeaturePlaylistCell.Model(id: id, name: name, artworkURL: URL(string: images.first?.url ?? ""), creator: owner.displayName ?? "Unknown")
     }
 }
 
@@ -51,10 +53,12 @@ struct Owner: Codable {
     var externalUrls: ExternalUrls
     var href: String
     var id, type, uri: String
+    var displayName: String?
 
     enum CodingKeys: String, CodingKey {
         case externalUrls = "external_urls"
         case href, id, type, uri
+        case displayName = "display_name"
     }
 }
 
@@ -62,3 +66,4 @@ struct Tracks: Codable {
     var href: String
     var total: Int
 }
+

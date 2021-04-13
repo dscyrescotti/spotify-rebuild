@@ -62,7 +62,7 @@ class NewReleaseCell: UICollectionViewCell, BrowseCell {
             albumCoverView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5),
             
             albumTitle.topAnchor.constraint(equalTo: albumCoverView.topAnchor),
-            albumTitle.leadingAnchor.constraint(equalTo: albumCoverView.trailingAnchor, constant: 5),
+            albumTitle.leadingAnchor.constraint(equalTo: albumCoverView.trailingAnchor, constant: 10),
             albumTitle.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5),
             
             artistName.topAnchor.constraint(equalTo: albumTitle.bottomAnchor, constant: 5),

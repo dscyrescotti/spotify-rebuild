@@ -37,9 +37,9 @@ class HomeViewController: UIViewController {
     }
     
     enum HomeSection {
-        case newRelease([NewReleaseCell.Model])
-        case featurePlaylist([FeaturePlaylistCell.Model])
-        case recommendations([RecommendationCell.Model])
+        case newRelease([Album])
+        case featurePlaylist([Playlist])
+        case recommendations([AudioTrack])
     }
 }
 
@@ -54,6 +54,12 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         sections.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        sections[indexPath.section].clickCell(indexPath: indexPath) { [weak self] vc in
+            self?.navigationController?.pushViewController(vc, animated: true)
+        }
     }
 }
 
@@ -97,7 +103,7 @@ extension HomeViewController {
                     defer { group.leave() }
                     switch result {
                     case .success(let model):
-                        newRelease = .newRelease(model.models)
+                        newRelease = .newRelease(model.albums.items)
                     case .failure(let error):
                         print(error.localizedDescription)
                     }
@@ -105,13 +111,12 @@ extension HomeViewController {
             }
         }
         DispatchQueue.global(qos: .userInitiated).async {
-            ApiManger.shared.getFeaturePlaylists { [weak self] result in
+            ApiManger.shared.getFeaturePlaylists { result in
                 DispatchQueue.main.async {
                     defer { group.leave() }
                     switch result {
                     case .success(let model):
-                        break
-//                        featurePlaylist = .featurePlaylist([])
+                        featurePlaylist = .featurePlaylist(model.playlists.items)
                     case .failure(let error):
                         print(error.localizedDescription)
                     }
@@ -119,7 +124,7 @@ extension HomeViewController {
             }
         }
         DispatchQueue.global(qos: .userInitiated).async {
-            ApiManger.shared.getRecommendedGenres { [weak self] result in
+            ApiManger.shared.getRecommendedGenres { result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let model):
@@ -130,8 +135,7 @@ extension HomeViewController {
                                     defer { group.leave() }
                                     switch result {
                                     case .success(let model):
-                                        break
-//                                        recommendation = .recommendations([])
+                                        recommendation = .recommendations(model.tracks)
                                     case .failure(let error):
                                         print(error.localizedDescription)
                                     }
@@ -197,7 +201,7 @@ extension HomeViewController.HomeSection {
         item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
         
         let verticalGroup = NSCollectionLayoutGroup.vertical(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0)), subitem: item, count: 2)
-        let horizontalGroup = NSCollectionLayoutGroup.horizontal(layoutSize: .init(widthDimension: .absolute(200), heightDimension: .absolute(400)), subitem: verticalGroup, count: 1)
+        let horizontalGroup = NSCollectionLayoutGroup.horizontal(layoutSize: .init(widthDimension: .absolute(200), heightDimension: .absolute(540)), subitem: verticalGroup, count: 1)
         
         let section = NSCollectionLayoutSection(group: horizontalGroup)
         section.orthogonalScrollingBehavior = .continuous
@@ -229,17 +233,29 @@ extension HomeViewController.HomeSection {
         switch self {
         case .newRelease(let models):
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NewReleaseCell.identifier, for: indexPath) as? NewReleaseCell else { fatalError("NewReleaseCell is not found.") }
-            let model = models[indexPath.item]
-            cell.configure(model: model)
+            cell.configure(model: models[indexPath.item].model)
             return cell
-        case .featurePlaylist:
+        case .featurePlaylist(let models):
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FeaturePlaylistCell.identifier, for: indexPath) as? FeaturePlaylistCell else { fatalError("FeaturePlaylistCell is not found.") }
-            cell.backgroundColor = .systemRed
+            cell.configure(model: models[indexPath.item].model)
             return cell
-        case .recommendations:
+        case .recommendations(let models):
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: RecommendationCell.identifier, for: indexPath) as? RecommendationCell else { fatalError("RecommendationCell is not found.") }
-            cell.backgroundColor = .systemBlue
+            cell.configure(model: models[indexPath.item].model)
             return cell
+        }
+    }
+    
+    func clickCell(indexPath: IndexPath, pushViewController: @escaping (UIViewController) -> Void) {
+        switch self {
+        case .newRelease(let models):
+            let vc = AlbumViewController(album: models[indexPath.item])
+            pushViewController(vc)
+        case .featurePlaylist(let models):
+            let vc = PlaylistViewController(playlist: models[indexPath.item])
+            pushViewController(vc)
+        case .recommendations(_):
+            break
         }
     }
 }
