@@ -90,20 +90,21 @@ final class ApiManger {
         }
     }
     
-    func getRecommendations(genres: Set<String>, completion: @escaping (Result<RecommendedGenres, Error>) -> Void) {
+    func getRecommendations(genres: Set<String>, completion: @escaping (Result<Recommendations, Error>) -> Void) {
         let seeds = genres.joined(separator: ",")
-        createRequest(url: URL(string: url(appending: "recommendations?seed_genres=\(seeds)&limit=1")), method: .GET) { baseRequest in
-            print(baseRequest.url?.absoluteString)
+        createRequest(url: URL(string: url(appending: "recommendations?seed_genres=\(seeds)")), method: .GET) { baseRequest in
+            print("Recommendations")
             let task = URLSession.shared.dataTask(with: baseRequest) { (data, _, error) in
+                print("URL - recommendations")
+                print(String(data: data ?? Data(), encoding: .utf8))
                 guard let data = data, error == nil else {
                     completion(.failure(ApiError.unableToFetch))
                     return
                 }
                 do {
-                    let json = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
-                    print(json)
-//                        JSONDecoder().decode(RecommendedGenres.self, from: data)
-//                    completion(.success(playlists))
+                    let recommendations = try JSONDecoder().decode(Recommendations.self, from: data)
+                    print(recommendations)
+                    completion(.success(recommendations))
                 } catch {
                     completion(.failure(error))
                 }
