@@ -1,5 +1,5 @@
 //
-//  RecommendationCell.swift
+//  PlaylistTrackCell.swift
 //  Spotify
 //
 //  Created by Dscyre Scotti on 13/04/2021.
@@ -7,8 +7,8 @@
 
 import UIKit
 
-class RecommendationCell: UICollectionViewCell, BrowseCell {
-    static let identifier = "RecommendationCell"
+class PlaylistTrackCell: UICollectionViewCell, BrowseCell {
+    static let identifier = "PlaylistTrackCell"
     
     private let albumCoverView: UIImageView = {
         let imageView = UIImageView()
@@ -30,7 +30,7 @@ class RecommendationCell: UICollectionViewCell, BrowseCell {
     private let artistName: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
-        label.font = .systemFont(ofSize: 17, weight: .thin)
+        label.font = .systemFont(ofSize: 17, weight: .light)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.sizeToFit()
         return label
@@ -46,13 +46,13 @@ class RecommendationCell: UICollectionViewCell, BrowseCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         NSLayoutConstraint.activate([
-            albumCoverView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 5),
-            albumCoverView.topAnchor.constraint(equalTo: topAnchor, constant: 5),
-            albumCoverView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5),
-            albumCoverView.widthAnchor.constraint(equalToConstant: height - 10),
+            albumCoverView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            albumCoverView.topAnchor.constraint(equalTo: topAnchor),
+            albumCoverView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            albumCoverView.widthAnchor.constraint(equalToConstant: height),
             
-            trackTitle.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-            trackTitle.leadingAnchor.constraint(equalTo: albumCoverView.trailingAnchor, constant: 5),
+            trackTitle.topAnchor.constraint(equalTo: topAnchor, constant: 5),
+            trackTitle.leadingAnchor.constraint(equalTo: albumCoverView.trailingAnchor, constant: 10),
             trackTitle.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5),
             
             artistName.topAnchor.constraint(equalTo: trackTitle.bottomAnchor, constant: 5),

@@ -59,7 +59,7 @@ struct PlaylistTrackItem: Codable {
 
 struct PlaylistItem: Codable {
     var album: PlaylistAlbum
-    var artists: [Owner]
+    var artists: [Artist]
     var availableMarkets: [String]
     var discNumber, durationMS: Int
     var explicit: Bool
@@ -82,6 +82,10 @@ struct PlaylistItem: Codable {
         case previewURL = "preview_url"
         case trackNumber = "track_number"
         case type, uri
+    }
+    
+    var model: PlaylistTrackCell.Model {
+        .init(id: id, name: name, artist: artists.first?.name ?? "Unknown", artworkURL: URL(string: album.images.first?.url ?? ""))
     }
 }
 

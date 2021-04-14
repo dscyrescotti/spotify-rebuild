@@ -47,6 +47,10 @@ struct Playlist: Codable {
     var model: FeaturePlaylistCell.Model {
         FeaturePlaylistCell.Model(id: id, name: name, artworkURL: URL(string: images.first?.url ?? ""), creator: owner.displayName ?? "Unknown")
     }
+    
+    var headerModel: PlaylistHeaderView.Model {
+        .init(name: name, owner: owner.displayName ?? "Unknown", description: itemDescription, artworkURL: URL(string: images.first?.url ?? ""))
+    }
 }
 
 struct Owner: Codable {

@@ -78,7 +78,7 @@ extension HomeViewController {
         collectionView.showsVerticalScrollIndicator = false
         collectionView.register(NewReleaseCell.self, forCellWithReuseIdentifier: NewReleaseCell.identifier)
         collectionView.register(FeaturePlaylistCell.self, forCellWithReuseIdentifier: FeaturePlaylistCell.identifier)
-        collectionView.register(RecommendationCell.self, forCellWithReuseIdentifier: RecommendationCell.identifier)
+        collectionView.register(PlaylistTrackCell.self, forCellWithReuseIdentifier: PlaylistTrackCell.identifier)
         collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "cell")
         collectionView.backgroundColor = .systemBackground
         
@@ -109,8 +109,6 @@ extension HomeViewController {
                     }
                 }
             }
-        }
-        DispatchQueue.global(qos: .userInitiated).async {
             ApiManger.shared.getFeaturePlaylists { result in
                 DispatchQueue.main.async {
                     defer { group.leave() }
@@ -122,8 +120,6 @@ extension HomeViewController {
                     }
                 }
             }
-        }
-        DispatchQueue.global(qos: .userInitiated).async {
             ApiManger.shared.getRecommendedGenres { result in
                 DispatchQueue.main.async {
                     switch result {
@@ -148,7 +144,6 @@ extension HomeViewController {
                 }
             }
         }
-        
         group.notify(queue: .main) {
             if let newRelease = newRelease {
                 self.sections.append(newRelease)
@@ -213,6 +208,7 @@ extension HomeViewController.HomeSection {
         item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
         
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(80)), subitem: item, count: 1)
+        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2)
         
         let section = NSCollectionLayoutSection(group: group)
         return section
@@ -240,7 +236,7 @@ extension HomeViewController.HomeSection {
             cell.configure(model: models[indexPath.item].model)
             return cell
         case .recommendations(let models):
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: RecommendationCell.identifier, for: indexPath) as? RecommendationCell else { fatalError("RecommendationCell is not found.") }
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PlaylistTrackCell.identifier, for: indexPath) as? PlaylistTrackCell else { fatalError("PlaylistTrackCell is not found.") }
             cell.configure(model: models[indexPath.item].model)
             return cell
         }
