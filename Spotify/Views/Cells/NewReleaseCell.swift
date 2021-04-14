@@ -41,6 +41,7 @@ class NewReleaseCell: UICollectionViewCell, BrowseCell {
         label.numberOfLines = 1
         label.font = .systemFont(ofSize: 18, weight: .regular)
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .secondaryLabel
         label.sizeToFit()
         return label
     }()
@@ -56,19 +57,19 @@ class NewReleaseCell: UICollectionViewCell, BrowseCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         NSLayoutConstraint.activate([
-            albumCoverView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 5),
-            albumCoverView.widthAnchor.constraint(equalToConstant: height - 10),
-            albumCoverView.topAnchor.constraint(equalTo: topAnchor, constant: 5),
-            albumCoverView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5),
+            albumCoverView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            albumCoverView.widthAnchor.constraint(equalToConstant: height),
+            albumCoverView.topAnchor.constraint(equalTo: topAnchor),
+            albumCoverView.bottomAnchor.constraint(equalTo: bottomAnchor),
             
-            albumTitle.topAnchor.constraint(equalTo: albumCoverView.topAnchor),
+            albumTitle.topAnchor.constraint(equalTo: topAnchor, constant: 5),
             albumTitle.leadingAnchor.constraint(equalTo: albumCoverView.trailingAnchor, constant: 10),
             albumTitle.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5),
             
             artistName.topAnchor.constraint(equalTo: albumTitle.bottomAnchor, constant: 5),
             artistName.leadingAnchor.constraint(equalTo: albumTitle.leadingAnchor),
             
-            trackNumber.bottomAnchor.constraint(equalTo: albumCoverView.bottomAnchor),
+            trackNumber.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5),
             trackNumber.leadingAnchor.constraint(equalTo: albumTitle.leadingAnchor),
         ])
     }
@@ -84,6 +85,8 @@ class NewReleaseCell: UICollectionViewCell, BrowseCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .secondarySystemBackground
+        layer.cornerRadius = 10
+        layer.masksToBounds = true
         addSubview(albumCoverView)
         addSubview(albumTitle)
         addSubview(artistName)

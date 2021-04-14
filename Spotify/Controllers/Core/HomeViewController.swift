@@ -18,7 +18,7 @@ class HomeViewController: UIViewController {
     private var collectionView: UICollectionView!
     
     private let spinner: UIActivityIndicatorView = {
-        let spinner = UIActivityIndicatorView(style: .medium)
+        let spinner = UIActivityIndicatorView(style: .large)
         spinner.tintColor = .label
         spinner.hidesWhenStopped = true
         return spinner
@@ -90,6 +90,7 @@ extension HomeViewController {
         
         view.addSubview(collectionView)
         view.addSubview(spinner)
+        spinner.startAnimating()
         collectionView.delegate = self
         collectionView.dataSource = self
     }
@@ -157,6 +158,7 @@ extension HomeViewController {
             if let recommendation = recommendation {
                 self.sections.append(recommendation)
             }
+            self.spinner.stopAnimating()
             self.collectionView.reloadData()
         }
         
@@ -186,10 +188,11 @@ extension HomeViewController.HomeSection {
     
     private func newReleaseLayout(_ boundarySupplementrayItems: [NSCollectionLayoutBoundarySupplementaryItem]) -> NSCollectionLayoutSection {
         let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0)))
-        item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 2, bottom: 2, trailing: 2)
 
         let verticalGroup = NSCollectionLayoutGroup.vertical(layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0)), subitem: item, count: 3)
         let horizontalGroup = NSCollectionLayoutGroup.horizontal(layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(390)), subitem: verticalGroup, count: 1)
+        horizontalGroup.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
         
         let section = NSCollectionLayoutSection(group: horizontalGroup)
         section.orthogonalScrollingBehavior = .groupPaging

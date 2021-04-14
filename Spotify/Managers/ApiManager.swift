@@ -18,6 +18,18 @@ final class ApiManger {
         case unableToFetch
     }
     
+    func getCategoryPlaylists(id: String, completion: @escaping (Result<PlaylistList, Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "browse/categories/\(id)/playlists")), method: .GET) { request in
+            self.fetchData(PlaylistList.self, request: request, completion: completion)
+        }
+    }
+    
+    func getAllCategories(completion: @escaping (Result<AllCategories, Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "browse/categories?limit=50")), method: .GET) { request in
+            self.fetchData(AllCategories.self, request: request, completion: completion)
+        }
+    }
+    
     func getPlaylistDetails(playlist: Playlist, completion: @escaping (Result<PlaylistDetails, Error>) -> Void) {
         createRequest(url: URL(string: url(appending: "playlists/\(playlist.id)")), method: .GET) { request in
             self.fetchData(PlaylistDetails.self, request: request, completion: completion)
@@ -42,9 +54,9 @@ final class ApiManger {
         }
     }
     
-    func getFeaturePlaylists(completion: @escaping (Result<FeaturePlaylist, Error>) -> Void) {
+    func getFeaturePlaylists(completion: @escaping (Result<PlaylistList, Error>) -> Void) {
         createRequest(url: URL(string: url(appending: "browse/featured-playlists?limit=50")), method: .GET) { request in
-            self.fetchData(FeaturePlaylist.self, request: request, completion: completion)
+            self.fetchData(PlaylistList.self, request: request, completion: completion)
         }
     }
     
