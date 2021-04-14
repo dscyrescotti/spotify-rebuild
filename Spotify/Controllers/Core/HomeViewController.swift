@@ -61,6 +61,12 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             self?.navigationController?.pushViewController(vc, animated: true)
         }
     }
+    
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        guard let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: BrowseSectionTitleView.identifier, for: indexPath) as? BrowseSectionTitleView else { fatalError("BrowseSectionTitleView is not found.") }
+        header.configure(title: sections[indexPath.section].title)
+        return header
+    }
 }
 
 extension HomeViewController {
@@ -79,7 +85,7 @@ extension HomeViewController {
         collectionView.register(NewReleaseCell.self, forCellWithReuseIdentifier: NewReleaseCell.identifier)
         collectionView.register(FeaturePlaylistCell.self, forCellWithReuseIdentifier: FeaturePlaylistCell.identifier)
         collectionView.register(PlaylistTrackCell.self, forCellWithReuseIdentifier: PlaylistTrackCell.identifier)
-        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "cell")
+        collectionView.register(BrowseSectionTitleView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: BrowseSectionTitleView.identifier)
         collectionView.backgroundColor = .systemBackground
         
         view.addSubview(collectionView)
@@ -96,51 +102,48 @@ extension HomeViewController {
         var newRelease: HomeSection?
         var featurePlaylist: HomeSection?
         var recommendation: HomeSection?
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            ApiManger.shared.getAllNewReleases { result in
-                DispatchQueue.main.async {
-                    defer { group.leave() }
-                    switch result {
-                    case .success(let model):
-                        newRelease = .newRelease(model.albums.items)
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
+        ApiManger.shared.getAllNewReleases { result in
+            DispatchQueue.main.async {
+                defer { group.leave() }
+                switch result {
+                case .success(let model):
+                    newRelease = .newRelease(model.albums.items)
+                case .failure(let error):
+                    print(error.localizedDescription)
                 }
             }
-            ApiManger.shared.getFeaturePlaylists { result in
-                DispatchQueue.main.async {
-                    defer { group.leave() }
-                    switch result {
-                    case .success(let model):
-                        featurePlaylist = .featurePlaylist(model.playlists.items)
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
+        }
+        ApiManger.shared.getFeaturePlaylists { result in
+            DispatchQueue.main.async {
+                defer { group.leave() }
+                switch result {
+                case .success(let model):
+                    featurePlaylist = .featurePlaylist(model.playlists.items)
+                case .failure(let error):
+                    print(error.localizedDescription)
                 }
             }
-            ApiManger.shared.getRecommendedGenres { result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success(let model):
-                        let genres = Set(model.genres.shuffled()[0...4])
-                        DispatchQueue.global(qos: .userInitiated).async {
-                            ApiManger.shared.getRecommendations(genres: genres) { result in
-                                DispatchQueue.main.async {
-                                    defer { group.leave() }
-                                    switch result {
-                                    case .success(let model):
-                                        recommendation = .recommendations(model.tracks)
-                                    case .failure(let error):
-                                        print(error.localizedDescription)
-                                    }
+        }
+        ApiManger.shared.getRecommendedGenres { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let model):
+                    let genres = Set(model.genres.shuffled()[0...4])
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        ApiManger.shared.getRecommendations(genres: genres) { result in
+                            DispatchQueue.main.async {
+                                defer { group.leave() }
+                                switch result {
+                                case .success(let model):
+                                    recommendation = .recommendations(model.tracks)
+                                case .failure(let error):
+                                    print(error.localizedDescription)
                                 }
                             }
                         }
-                    case .failure(let error):
-                        print(error.localizedDescription)
                     }
+                case .failure(let error):
+                    print(error.localizedDescription)
                 }
             }
         }
@@ -169,17 +172,19 @@ extension HomeViewController {
 
 extension HomeViewController.HomeSection {
     var createLayoutSection: NSCollectionLayoutSection {
+        
+        let supplementaryItem = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40)), elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
         switch self {
         case .newRelease:
-            return newReleaseLayout()
+            return newReleaseLayout([supplementaryItem])
         case .featurePlaylist:
-            return featurePlaylistLayout()
+            return featurePlaylistLayout([supplementaryItem])
         case .recommendations:
-            return recommendatinosLayout()
+            return recommendatinosLayout([supplementaryItem])
         }
     }
     
-    private func newReleaseLayout() -> NSCollectionLayoutSection {
+    private func newReleaseLayout(_ boundarySupplementrayItems: [NSCollectionLayoutBoundarySupplementaryItem]) -> NSCollectionLayoutSection {
         let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0)))
         item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
 
@@ -188,10 +193,11 @@ extension HomeViewController.HomeSection {
         
         let section = NSCollectionLayoutSection(group: horizontalGroup)
         section.orthogonalScrollingBehavior = .groupPaging
+        section.boundarySupplementaryItems = boundarySupplementrayItems
         return section
     }
     
-    private func featurePlaylistLayout() -> NSCollectionLayoutSection {
+    private func featurePlaylistLayout(_ boundarySupplementrayItems: [NSCollectionLayoutBoundarySupplementaryItem]) -> NSCollectionLayoutSection {
         let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0)))
         item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
         
@@ -200,10 +206,11 @@ extension HomeViewController.HomeSection {
         
         let section = NSCollectionLayoutSection(group: horizontalGroup)
         section.orthogonalScrollingBehavior = .continuous
+        section.boundarySupplementaryItems = boundarySupplementrayItems
         return section
     }
     
-    private func recommendatinosLayout() -> NSCollectionLayoutSection {
+    private func recommendatinosLayout(_ boundarySupplementrayItems: [NSCollectionLayoutBoundarySupplementaryItem]) -> NSCollectionLayoutSection {
         let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0)))
         item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
         
@@ -211,6 +218,7 @@ extension HomeViewController.HomeSection {
         group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2)
         
         let section = NSCollectionLayoutSection(group: group)
+        section.boundarySupplementaryItems = boundarySupplementrayItems
         return section
     }
     
@@ -252,6 +260,17 @@ extension HomeViewController.HomeSection {
             pushViewController(vc)
         case .recommendations(_):
             break
+        }
+    }
+    
+    var title: String {
+        switch self {
+        case .newRelease:
+            return "New Releases"
+        case .featurePlaylist:
+            return "Feature Playlists"
+        case .recommendations:
+            return "Recommendations"
         }
     }
 }

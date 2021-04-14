@@ -75,4 +75,7 @@ struct AlbumTrackItem: Codable {
         case trackNumber = "track_number"
         case type, uri
     }
+    var model: AlbumTrackCell.Model {
+        .init(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: nil)
+    }
 }

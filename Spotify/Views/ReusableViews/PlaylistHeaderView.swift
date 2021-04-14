@@ -36,13 +36,12 @@ class PlaylistHeaderView: UICollectionReusableView {
         button.backgroundColor = .systemGreen
         button.layer.cornerRadius = 15
         button.translatesAutoresizingMaskIntoConstraints = false
-//        button.setContentHuggingPriority(UILayoutPriority(1), for: .vertical)
         return button
     }()
     
     private let ownerName: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .medium)
+        label.font = .systemFont(ofSize: 18, weight: .semibold)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textAlignment = .center
         label.textColor = .secondaryLabel

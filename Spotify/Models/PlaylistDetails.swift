@@ -85,7 +85,7 @@ struct PlaylistItem: Codable {
     }
     
     var model: PlaylistTrackCell.Model {
-        .init(id: id, name: name, artist: artists.first?.name ?? "Unknown", artworkURL: URL(string: album.images.first?.url ?? ""))
+        .init(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album.images.first?.url ?? ""))
     }
 }
 

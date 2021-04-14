@@ -31,6 +31,7 @@ struct Album: Codable {
     var images: [Image]
     var name, type, uri: String
     var totalTracks: Int
+    var releaseDate: String
 
     enum CodingKeys: String, CodingKey {
         case albumType = "album_type"
@@ -39,10 +40,15 @@ struct Album: Codable {
         case externalUrls = "external_urls"
         case href, id, images, name, type, uri
         case totalTracks = "total_tracks"
+        case releaseDate = "release_date"
     }
     
     var model: NewReleaseCell.Model {
         NewReleaseCell.Model(id: id, name: name, artworkURL: URL(string: images.first?.url ?? ""), totalTracks: totalTracks, artistName: artists.first?.name ?? "Unknown")
+    }
+    
+    var headerModel: PlaylistHeaderView.Model {
+        .init(name: name, owner: artists.first?.name ?? "Unknown", description: "Release Date: \(DateFormatter.format(releaseDate))", artworkURL: URL(string: images.first?.url ?? ""))
     }
 }
 
