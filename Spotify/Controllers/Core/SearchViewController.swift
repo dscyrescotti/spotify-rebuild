@@ -46,6 +46,12 @@ extension SearchViewController: UISearchResultsUpdating, UICollectionViewDataSou
         guard let query = searchController.searchBar.text, !query.isEmpty else { return }
         print(query)
     }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        let vc = PlaylistsViewController(category: categories[indexPath.item].0)
+        navigationController?.pushViewController(vc, animated: true)
+    }
 }
 
 extension SearchViewController {
