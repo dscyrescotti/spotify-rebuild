@@ -32,4 +32,8 @@ extension UIView {
     var bottom: CGFloat {
         top + height
     }
+    
+    var isLandscape: Bool {
+        width > height
+    }
 }

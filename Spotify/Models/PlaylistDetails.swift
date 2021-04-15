@@ -47,7 +47,7 @@ struct PlaylistTrackItem: Codable {
     var addedAt: String
     var addedBy: Owner?
     var isLocal: Bool
-    var track: PlaylistItem
+    var track: AudioTrack
 
     enum CodingKeys: String, CodingKey {
         case addedAt = "added_at"

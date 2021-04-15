@@ -10,7 +10,7 @@ import UIKit
 class AlbumViewController: UIViewController {
     
     private let album: Album
-    private var tracks: [AlbumTrackItem] = []
+    private var tracks: [AudioTrack] = []
     private var collectionView: UICollectionView!
     
     init(album: Album) {
@@ -76,7 +76,7 @@ extension AlbumViewController: UICollectionViewDataSource, UICollectionViewDeleg
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AlbumTrackCell.identifier, for: indexPath) as? AlbumTrackCell else { fatalError("AlbumTrackCell is not found") }
-        cell.configure(model: tracks[indexPath.item].model)
+        cell.configure(model: tracks[indexPath.item].albumTrack)
         return cell
     }
     
@@ -91,13 +91,18 @@ extension AlbumViewController: UICollectionViewDataSource, UICollectionViewDeleg
         return header
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        PlaybackManager.shared.startPlayback(self, track: tracks[indexPath.item])
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         collectionView.frame = view.bounds
     }
     
     @objc func tappedPlayButton() {
-        print("play all")
+        PlaybackManager.shared.startPlayback(self, tracks: tracks)
     }
     
     @objc func tappedShareButton() {

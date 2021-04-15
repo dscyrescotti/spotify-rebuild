@@ -19,18 +19,16 @@ struct Seed: Codable {
 }
 
 struct AudioTrack: Codable {
-    var album: Album
+    var album: Album?
     var artists: [Artist]
     var availableMarkets: [String]
     var discNumber, durationMS: Int
     var explicit: Bool
-    var externalIDS: ExternalIDS
     var externalUrls: ExternalUrls
     var href: String
     var id: String
     var isLocal: Bool
     var name: String
-    var popularity: Int
     var previewURL: String?
     var trackNumber: Int
     var type, uri: String
@@ -41,17 +39,20 @@ struct AudioTrack: Codable {
         case discNumber = "disc_number"
         case durationMS = "duration_ms"
         case explicit
-        case externalIDS = "external_ids"
         case externalUrls = "external_urls"
         case href, id
         case isLocal = "is_local"
-        case name, popularity
+        case name
         case previewURL = "preview_url"
         case trackNumber = "track_number"
         case type, uri
     }
     var model: PlaylistTrackCell.Model {
-        PlaylistTrackCell.Model(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album.images.first?.url ?? ""))
+        PlaylistTrackCell.Model(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album?.images.first?.url ?? ""))
+    }
+    
+    var albumTrack: AlbumTrackCell.Model {
+        .init(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album?.images.first?.url ?? ""))
     }
 }
 

@@ -56,9 +56,15 @@ struct Artist: Codable {
     var externalUrls: ExternalUrls
     var href: String
     var id, name, type, uri: String
+    var images: [Image]?
 
     enum CodingKeys: String, CodingKey {
         case externalUrls = "external_urls"
         case href, id, name, type, uri
+        case images
+    }
+    
+    var model: ArtistCell.Model {
+        .init(id: id, name: name, imageURL: URL(string: images?.first?.url ?? ""))
     }
 }

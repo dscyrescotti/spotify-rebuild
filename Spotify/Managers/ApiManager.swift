@@ -18,6 +18,12 @@ final class ApiManger {
         case unableToFetch
     }
     
+    func getSearch(query: String, completion: @escaping (Result<Search, Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "search?q=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&type=album,artist,playlist,track")), method: .GET) { request in
+            self.fetchData(Search.self, request: request, completion: completion)
+        }
+    }
+    
     func getCategoryPlaylists(id: String, completion: @escaping (Result<PlaylistList, Error>) -> Void) {
         createRequest(url: URL(string: url(appending: "browse/categories/\(id)/playlists")), method: .GET) { request in
             self.fetchData(PlaylistList.self, request: request, completion: completion)

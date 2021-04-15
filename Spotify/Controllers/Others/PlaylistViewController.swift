@@ -12,7 +12,7 @@ class PlaylistViewController: UIViewController {
     private let playlist: Playlist
     
     private var collectionView: UICollectionView!
-    private var tracks: [PlaylistTrackItem] = []
+    private var tracks: [AudioTrack] = []
     
     init(playlist: Playlist) {
         self.playlist = playlist
@@ -38,7 +38,7 @@ extension PlaylistViewController: UICollectionViewDataSource, UICollectionViewDe
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PlaylistTrackCell.identifier, for: indexPath) as? PlaylistTrackCell else { fatalError("PlaylistTrackCell is not found") }
-        cell.configure(model: tracks[indexPath.item].track.model)
+        cell.configure(model: tracks[indexPath.item].model)
         return cell
     }
     
@@ -81,7 +81,7 @@ extension PlaylistViewController {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let model):
-                        self?.tracks = model.tracks.items
+                        self?.tracks = model.tracks.items.map { $0.track }
                         self?.collectionView.reloadData()
                     case .failure(let error):
                         print(error)
@@ -110,8 +110,13 @@ extension PlaylistViewController {
         collectionView.frame = view.bounds
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        PlaybackManager.shared.startPlayback(self, track: tracks[indexPath.item])
+    }
+    
     @objc func tappedPlayButton() {
-        print("play all")
+        PlaybackManager.shared.startPlayback(self, tracks: tracks)
     }
     
     @objc func tappedShareButton() {

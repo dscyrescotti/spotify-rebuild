@@ -32,7 +32,7 @@ struct Playlist: Codable {
     var name: String
     var owner: Owner
     var snapshotID: String
-    var tracks: Tracks
+//    var tracks: Tracks
     var type, uri: String
 
     enum CodingKeys: String, CodingKey {
@@ -41,7 +41,7 @@ struct Playlist: Codable {
         case externalUrls = "external_urls"
         case href, id, images, name, owner
         case snapshotID = "snapshot_id"
-        case tracks, type, uri
+        case type, uri
     }
     
     var model: FeaturePlaylistCell.Model {
@@ -66,8 +66,8 @@ struct Owner: Codable {
     }
 }
 
-struct Tracks: Codable {
-    var href: String
-    var total: Int
-}
+//struct Tracks: Codable {
+//    var href: String
+//    var total: Int
+//}
 

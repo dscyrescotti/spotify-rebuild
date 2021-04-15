@@ -13,6 +13,7 @@ class SearchViewController: UIViewController {
         let controller = UISearchController(searchResultsController: SearchResultViewController())
         controller.searchBar.placeholder = "Songs, Artists, Albums"
         controller.searchBar.searchBarStyle = .minimal
+        controller.searchBar.autocapitalizationType = .none
         controller.definesPresentationContext = true
         return controller
     }()
@@ -29,7 +30,11 @@ class SearchViewController: UIViewController {
 
 }
 
-extension SearchViewController: UISearchResultsUpdating, UICollectionViewDataSource, UICollectionViewDelegate {
+extension SearchViewController: UISearchResultsUpdating, UICollectionViewDataSource, UICollectionViewDelegate, UISearchBarDelegate, SearchResultViewControllerDelegate {
+    func pushController(_ viewController: UIViewController) {
+        navigationController?.pushViewController(viewController, animated: true)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         categories.count
     }
@@ -43,14 +48,21 @@ extension SearchViewController: UISearchResultsUpdating, UICollectionViewDataSou
     }
     
     func updateSearchResults(for searchController: UISearchController) {
-        guard let query = searchController.searchBar.text, !query.isEmpty else { return }
-        print(query)
+//        guard let query = searchController.searchBar.text, !query.isEmpty else { return }
+//        print(query)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
         let vc = PlaylistsViewController(category: categories[indexPath.item].0)
         navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        guard  let query = searchBar.text, !query.isEmpty else {
+            return
+        }
+        searchData(query)
     }
 }
 
@@ -61,6 +73,8 @@ extension SearchViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         
         searchController.searchResultsUpdater = self
+        searchController.searchBar.delegate = self
+        (searchController.searchResultsController as? SearchResultViewController)?.delegate = self
         navigationItem.searchController = searchController
         
         let layout = UICollectionViewCompositionalLayout { (_, _) -> NSCollectionLayoutSection? in
@@ -92,6 +106,19 @@ extension SearchViewController {
                 case .success(let model):
                     self?.categories = model.categories.items.map { ($0, UIColor.randomColor) }
                     self?.collectionView.reloadData()
+                case .failure(let error):
+                    print(error)
+                }
+            }
+        }
+    }
+    
+    func searchData(_ query: String) {
+        ApiManger.shared.getSearch(query: query) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let model):
+                    (self?.searchController.searchResultsController as? SearchResultViewController)?.updateSections(model)
                 case .failure(let error):
                     print(error)
                 }

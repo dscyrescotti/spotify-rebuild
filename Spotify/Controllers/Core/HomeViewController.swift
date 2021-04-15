@@ -57,7 +57,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        sections[indexPath.section].clickCell(indexPath: indexPath) { [weak self] vc in
+        sections[indexPath.section].clickCell(indexPath: indexPath, parentViewController: self) { [weak self] vc in
             self?.navigationController?.pushViewController(vc, animated: true)
         }
     }
@@ -253,7 +253,7 @@ extension HomeViewController.HomeSection {
         }
     }
     
-    func clickCell(indexPath: IndexPath, pushViewController: @escaping (UIViewController) -> Void) {
+    func clickCell(indexPath: IndexPath, parentViewController: UIViewController, pushViewController: @escaping (UIViewController) -> Void) {
         switch self {
         case .newRelease(let models):
             let vc = AlbumViewController(album: models[indexPath.item])
@@ -261,8 +261,9 @@ extension HomeViewController.HomeSection {
         case .featurePlaylist(let models):
             let vc = PlaylistViewController(playlist: models[indexPath.item])
             pushViewController(vc)
-        case .recommendations(_):
-            break
+        case .recommendations(let models):
+            PlaybackManager.shared.startPlayback(parentViewController, track: models[indexPath.item])
+        break 
         }
     }
     

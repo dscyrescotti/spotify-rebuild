@@ -43,7 +43,7 @@ struct Copyright: Codable {
 
 struct AlbumTracks: Codable {
     var href: String
-    var items: [AlbumTrackItem]
+    var items: [AudioTrack]
     var limit: Int
     var next: String?
     var offset: Int
