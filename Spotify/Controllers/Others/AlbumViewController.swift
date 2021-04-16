@@ -57,7 +57,7 @@ extension AlbumViewController {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let model):
-                        self?.tracks = model.tracks.items
+                        self?.tracks = model.audioTracks
                         self?.collectionView.reloadData()
                     case .failure(let error):
                         print(error)
@@ -93,7 +93,7 @@ extension AlbumViewController: UICollectionViewDataSource, UICollectionViewDeleg
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        PlaybackManager.shared.startPlayback(self, track: tracks[indexPath.item])
+        PlaybackManager.shared.startPlayback(self, track: tracks[indexPath.item], tracks: tracks)
     }
     
     override func viewDidLayoutSubviews() {
@@ -102,7 +102,7 @@ extension AlbumViewController: UICollectionViewDataSource, UICollectionViewDeleg
     }
     
     @objc func tappedPlayButton() {
-        PlaybackManager.shared.startPlayback(self, tracks: tracks)
+        PlaybackManager.shared.startPlayback(self, track: tracks.first, tracks: tracks)
     }
     
     @objc func tappedShareButton() {

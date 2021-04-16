@@ -18,6 +18,35 @@ final class ApiManger {
         case unableToFetch
     }
     
+    func getUserPlaylist(completion: @escaping (Result<Playlists, Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "me/playlists")), method: .GET) { request in
+            self.fetchData(Playlists.self, request: request, completion: completion)
+        }
+    }
+    
+    func createPlaylist(with name: String, completion: @escaping (Bool) -> Void) {
+        getCurrentUserProfile { [weak self] result in
+            switch result {
+            case .success(let profile):
+                self?.createRequest(url: URL(string: self?.url(appending: "users/\(profile.id)/playlists") ?? ""), method: .POST, completion: { request in
+                    var request = request
+                    request.httpBody = try? JSONSerialization.data(withJSONObject: ["name": name], options: .fragmentsAllowed)
+                    self?.fetchData(request: request, completion: completion)
+                })
+            case .failure(let error):
+                print(error)
+            }
+        }
+    }
+    
+    func addTrackToPlaylist(track: AudioTrack, playlist: Playlist, completion: @escaping (Bool) -> Void) {
+        
+    }
+    
+    func removeTrackFromPlaylist(track: AudioTrack, playlist: Playlist, completion: @escaping (Bool) -> Void) {
+        
+    }
+    
     func getSearch(query: String, completion: @escaping (Result<Search, Error>) -> Void) {
         createRequest(url: URL(string: url(appending: "search?q=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&type=album,artist,playlist,track")), method: .GET) { request in
             self.fetchData(Search.self, request: request, completion: completion)
@@ -91,6 +120,17 @@ final class ApiManger {
             } catch {
                 completion(.failure(error))
             }
+        }
+        task.resume()
+    }
+    
+    private func fetchData(request: URLRequest, completion: @escaping (Bool) -> Void) {
+        let task = URLSession.shared.dataTask(with: request) { (data, _, error) in
+            guard let data = data, error == nil else {
+                completion(false)
+                return
+            }
+            completion(true)
         }
         task.resume()
     }

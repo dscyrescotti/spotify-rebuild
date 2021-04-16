@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-protocol BrowseCell: UICollectionViewCell {
+protocol BrowseCell {
     associatedtype Model
     static var identifier: String { get }
 }

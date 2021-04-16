@@ -35,6 +35,10 @@ struct AlbumDetails: Codable {
         case tracks
         case type, uri
     }
+    
+    var audioTracks: [AudioTrack] {
+        tracks.items.map { AudioTrack.init(album: Album.init(albumType: albumType, artists: artists, availableMarkets: availableMarkets, externalUrls: externalUrls, href: href, id: id, images: images, name: name, type: type, uri: uri, totalTracks: tracks.items.count, releaseDate: releaseDate), artists: $0.artists, availableMarkets: $0.availableMarkets, discNumber: $0.durationMS, durationMS: $0.durationMS, explicit: $0.explicit, externalUrls: $0.externalUrls, href: $0.href, id: $0.id, isLocal: false, name: $0.name, previewURL: $0.previewURL, trackNumber: $0.trackNumber, type: $0.type, uri: $0.uri) }
+    }
 }
 
 struct Copyright: Codable {
@@ -43,7 +47,7 @@ struct Copyright: Codable {
 
 struct AlbumTracks: Codable {
     var href: String
-    var items: [AudioTrack]
+    var items: [AlbumTrackItem]
     var limit: Int
     var next: String?
     var offset: Int

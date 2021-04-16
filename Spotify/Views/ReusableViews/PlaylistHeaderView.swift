@@ -16,6 +16,8 @@ class PlaylistHeaderView: UICollectionReusableView {
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.layer.cornerRadius = 10
+        imageView.layer.masksToBounds = true
         return imageView
     }()
     
@@ -79,17 +81,15 @@ class PlaylistHeaderView: UICollectionReusableView {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let imageSize = height * 0.6
-        
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: topAnchor, constant: 15),
-            imageView.widthAnchor.constraint(equalToConstant: imageSize),
-            imageView.heightAnchor.constraint(equalToConstant: imageSize),
+            imageView.widthAnchor.constraint(equalTo: heightAnchor, multiplier: 0.6),
+            imageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.6),
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
             
             playlistName.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             playlistName.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 5),
-            playlistName.widthAnchor.constraint(equalToConstant: width - 10),
+            playlistName.widthAnchor.constraint(equalTo: widthAnchor, constant: 10),
             
             playButton.centerXAnchor.constraint(equalTo: playlistName.centerXAnchor),
             playButton.topAnchor.constraint(equalTo: playlistName.bottomAnchor, constant: 10),
@@ -103,7 +103,7 @@ class PlaylistHeaderView: UICollectionReusableView {
             
             ownerName.centerXAnchor.constraint(equalTo: descriptionLabel.centerXAnchor),
             ownerName.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 5),
-            ownerName.widthAnchor.constraint(equalToConstant: width - 10),
+            ownerName.widthAnchor.constraint(equalTo: widthAnchor, constant: 10),
             ownerName.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -10)
         ])
     }

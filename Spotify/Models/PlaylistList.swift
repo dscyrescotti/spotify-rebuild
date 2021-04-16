@@ -32,7 +32,6 @@ struct Playlist: Codable {
     var name: String
     var owner: Owner
     var snapshotID: String
-//    var tracks: Tracks
     var type, uri: String
 
     enum CodingKeys: String, CodingKey {
@@ -50,6 +49,10 @@ struct Playlist: Codable {
     
     var headerModel: PlaylistHeaderView.Model {
         .init(name: name, owner: owner.displayName ?? "Unknown", description: itemDescription, artworkURL: URL(string: images.first?.url ?? ""))
+    }
+    
+    var libraryModel: LibraryCell.Model {
+        .init(id: id, name: name, artworkURL: URL(string: images.first?.url ?? ""), creator: owner.displayName ?? "Unknown")
     }
 }
 

@@ -19,7 +19,7 @@ struct Seed: Codable {
 }
 
 struct AudioTrack: Codable {
-    var album: Album?
+    var album: Album
     var artists: [Artist]
     var availableMarkets: [String]
     var discNumber, durationMS: Int
@@ -48,11 +48,15 @@ struct AudioTrack: Codable {
         case type, uri
     }
     var model: PlaylistTrackCell.Model {
-        PlaylistTrackCell.Model(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album?.images.first?.url ?? ""))
+        PlaylistTrackCell.Model(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album.images.first?.url ?? ""))
     }
     
     var albumTrack: AlbumTrackCell.Model {
-        .init(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album?.images.first?.url ?? ""))
+        .init(id: id, name: name, artist: artists.map { $0.name }.joined(separator: ", "), artworkURL: URL(string: album.images.first?.url ?? ""))
+    }
+    
+    var playerTrack: PlayerViewController.Model {
+        .init(url: URL(string: album.images.first?.url ?? ""), title: name, subtitle: artists.map { $0.name }.joined(separator: ", "), hidesLabel: previewURL != nil)
     }
 }
 

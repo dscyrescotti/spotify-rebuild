@@ -13,17 +13,31 @@ class PlayerViewController: UIViewController {
     var imagePortraitX: NSLayoutConstraint?
     var imagePortraitHeight: NSLayoutConstraint?
     var imagePortraitWidth: NSLayoutConstraint?
+    var toolPortraitTop: NSLayoutConstraint?
+    var toolPortraitBottom: NSLayoutConstraint?
+    var toolPortraitWidth: NSLayoutConstraint?
     
     var imageLandscapeLeading: NSLayoutConstraint?
     var imageLandscapeY: NSLayoutConstraint?
     var imageLandscapeHeight: NSLayoutConstraint?
     var imageLandscapeWidth: NSLayoutConstraint?
+    var toolLandscapeLeading: NSLayoutConstraint?
+    var toolLandscapeTrailing: NSLayoutConstraint?
+    var toolLandscapeY: NSLayoutConstraint?
     
     private let trackImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 10
+        imageView.layer.masksToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
+    }()
+    
+    private let playerToolView: PlayerToolView = {
+        let view = PlayerToolView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
     }()
 
     override func viewDidLoad() {
@@ -32,41 +46,74 @@ class PlayerViewController: UIViewController {
         setUpConstraints()
         setUp()
     }
-
+    
+    struct Model {
+        let url: URL?
+        let title: String
+        let subtitle: String
+        let hidesLabel: Bool
+    }
+    
+    func configure(model: Model?) {
+        title = model?.title
+        playerToolView.configure(title: model?.title, subtitle: model?.subtitle, hidesLabel: model?.hidesLabel ?? true)
+        trackImageView.sd_setImage(with: model?.url)
+    }
 }
 
 extension PlayerViewController {
     func setUp() {
         view.backgroundColor = .systemBackground
+        navigationController?.navigationBar.tintColor = .label
         
         navigationItem.largeTitleDisplayMode = .never
-        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(tappedCancel))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(tappedCancel))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(tappedAction))
         
+        playerToolView.delegate = self
+        PlaybackManager.shared.delegate = self
         view.addSubview(trackImageView)
-        trackImageView.backgroundColor = .systemGreen
+        view.addSubview(playerToolView)
+        trackImageView.backgroundColor = .systemBackground
     }
     
+    @objc func tappedCancel() {
+        dismiss(animated: true)
+    }
+    
+    @objc func tappedAction() {
+        
+    }
+}
+
+extension PlayerViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let orientation = UIDevice.current.orientation
-        if orientation == .portrait {
-            self.applyPortraitConstraints()
-        } else {
+        if view.isLandscape {
             self.applyLandscapeConstraints()
+        } else {
+            self.applyPortraitConstraints()
         }
     }
     
     func setUpConstraints() {
-        imagePortraitTop = NSLayoutConstraint(item: trackImageView, attribute: .top, relatedBy: .equal, toItem: view.safeAreaLayoutGuide, attribute: .top, multiplier: 1, constant: 20)
-        imagePortraitX = NSLayoutConstraint(item: trackImageView, attribute: .centerX, relatedBy: .equal, toItem: view, attribute: .centerX, multiplier: 1, constant: 0)
-        imagePortraitWidth = NSLayoutConstraint(item: trackImageView, attribute: .width, relatedBy: .equal, toItem: view, attribute: .width, multiplier: 0.8, constant: 0)
-        imagePortraitHeight = NSLayoutConstraint(item: trackImageView, attribute: .height, relatedBy: .equal, toItem: view, attribute: .width, multiplier: 0.8, constant: 0)
+        imagePortraitTop = trackImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100)
+        imagePortraitX = trackImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        imagePortraitWidth = trackImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9)
+        imagePortraitHeight = trackImageView.heightAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9)
         
-        imageLandscapeLeading = .init(item: trackImageView, attribute: .leading, relatedBy: .equal, toItem: view.safeAreaLayoutGuide, attribute: .leading, multiplier: 1, constant: 20)
-        imageLandscapeY = .init(item: trackImageView, attribute: .centerY, relatedBy: .equal, toItem: view, attribute: .centerY, multiplier: 1, constant: 0)
-        imageLandscapeWidth = .init(item: trackImageView, attribute: .width, relatedBy: .equal, toItem: view, attribute: .height, multiplier: 0.8, constant: 0)
-        imageLandscapeHeight = .init(item: trackImageView, attribute: .height, relatedBy: .equal, toItem: view, attribute: .height, multiplier: 0.8, constant: 0)
+        toolPortraitTop = playerToolView.topAnchor.constraint(equalTo: trackImageView.bottomAnchor, constant: 20)
+        toolPortraitBottom = playerToolView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        toolPortraitWidth = playerToolView.widthAnchor.constraint(equalTo: view.widthAnchor)
+        
+        imageLandscapeLeading = trackImageView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20)
+        imageLandscapeY = trackImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        imageLandscapeWidth = trackImageView.widthAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.8)
+        imageLandscapeHeight = trackImageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.8)
+        
+        toolLandscapeY = playerToolView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        toolLandscapeLeading = playerToolView.leadingAnchor.constraint(equalTo: trackImageView.trailingAnchor, constant: 20)
+        toolLandscapeTrailing = playerToolView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
     }
     
     func removeConstraints() {
@@ -75,10 +122,19 @@ extension PlayerViewController {
         if let c = imagePortraitWidth { view.removeConstraint(c) }
         if let c = imagePortraitHeight { view.removeConstraint(c) }
         
+        if let c = toolPortraitWidth { view.removeConstraint(c) }
+        if let c = toolPortraitBottom { view.removeConstraint(c) }
+        if let c = toolPortraitTop { view.removeConstraint(c) }
+        
         if let c = imageLandscapeHeight { view.removeConstraint(c) }
         if let c = imageLandscapeWidth { view.removeConstraint(c) }
         if let c = imageLandscapeY { view.removeConstraint(c) }
         if let c = imageLandscapeLeading { view.removeConstraint(c) }
+        
+        
+        if let c = toolLandscapeTrailing { view.removeConstraint(c) }
+        if let c = toolLandscapeLeading { view.removeConstraint(c) }
+        if let c = toolLandscapeY { view.removeConstraint(c) }
     }
     
     func applyPortraitConstraints() {
@@ -87,6 +143,10 @@ extension PlayerViewController {
         view.addConstraint(imagePortraitX!)
         view.addConstraint(imagePortraitWidth!)
         view.addConstraint(imagePortraitHeight!)
+        
+        view.addConstraint(toolPortraitWidth!)
+        view.addConstraint(toolPortraitBottom!)
+        view.addConstraint(toolPortraitTop!)
     }
     
     func applyLandscapeConstraints() {
@@ -95,25 +155,35 @@ extension PlayerViewController {
         view.addConstraint(imageLandscapeWidth!)
         view.addConstraint(imageLandscapeY!)
         view.addConstraint(imageLandscapeLeading!)
-    }
-    
-//    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-//        coordinator.animate { _ in
-//            let orientation = UIDevice.current.orientation
-//            if orientation == .portrait {
-//                self.applyPortraitConstraints()
-//            } else {
-//                self.applyLandscapeConstraints()
-//            }
-//        }
-//        super.viewWillTransition(to: size, with: coordinator)
-//    }
-    
-    @objc func tappedCancel() {
-        dismiss(animated: true)
-    }
-    
-    @objc func tappedAction() {
         
+        view.addConstraint(toolLandscapeTrailing!)
+        view.addConstraint(toolLandscapeLeading!)
+        view.addConstraint(toolLandscapeY!)
+    }
+}
+
+extension PlayerViewController: PlaybackManagerDelegate {
+    func moveToNextTrack() {
+        PlaybackManager.shared.configure(completion: configure)
+    }
+}
+
+extension PlayerViewController: PlayerToolViewDelegate {
+    func clickPlayButton() {
+        PlaybackManager.shared.play()
+    }
+    
+    func clickBackward() {
+        PlaybackManager.shared.backward()
+        PlaybackManager.shared.configure(completion: configure)
+    }
+    
+    func clickForward() {
+        PlaybackManager.shared.forward()
+        PlaybackManager.shared.configure(completion: configure)
+    }
+    
+    func sliderMove(value: Float) {
+        PlaybackManager.shared.changeVolume(value: value)
     }
 }

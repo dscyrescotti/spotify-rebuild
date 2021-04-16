@@ -218,7 +218,7 @@ extension SearchResultViewController.SearchSection {
             let vc = PlaylistViewController(playlist: models[indexPath.item])
             pushViewController(vc)
         case .tracks(let models):
-            PlaybackManager.shared.startPlayback(parentViewController, track: models[indexPath.item])
+            PlaybackManager.shared.startPlayback(parentViewController, track: models[indexPath.item], tracks: models)
         }
     }
     

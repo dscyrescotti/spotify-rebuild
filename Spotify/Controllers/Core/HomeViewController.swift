@@ -262,7 +262,7 @@ extension HomeViewController.HomeSection {
             let vc = PlaylistViewController(playlist: models[indexPath.item])
             pushViewController(vc)
         case .recommendations(let models):
-            PlaybackManager.shared.startPlayback(parentViewController, track: models[indexPath.item])
+            PlaybackManager.shared.startPlayback(parentViewController, track: models[indexPath.item], tracks: models)
         break 
         }
     }

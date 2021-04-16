@@ -112,11 +112,11 @@ extension PlaylistViewController {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        PlaybackManager.shared.startPlayback(self, track: tracks[indexPath.item])
+        PlaybackManager.shared.startPlayback(self, track: tracks[indexPath.item], tracks: tracks)
     }
     
     @objc func tappedPlayButton() {
-        PlaybackManager.shared.startPlayback(self, tracks: tracks)
+        PlaybackManager.shared.startPlayback(self, track: tracks.first, tracks: tracks)
     }
     
     @objc func tappedShareButton() {
