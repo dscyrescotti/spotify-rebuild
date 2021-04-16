@@ -126,7 +126,7 @@ final class ApiManger {
     
     private func fetchData(request: URLRequest, completion: @escaping (Bool) -> Void) {
         let task = URLSession.shared.dataTask(with: request) { (data, _, error) in
-            guard let data = data, error == nil else {
+            guard let _ = data, error == nil else {
                 completion(false)
                 return
             }
