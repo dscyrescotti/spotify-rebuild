@@ -128,6 +128,13 @@ final class AuthManager {
         task.resume()
     }
     
+    func signOut(completion: () -> Void) {
+        try? keychain.remove(KeychainKeys.access_token.rawValue)
+        try? keychain.remove(KeychainKeys.refresh_token.rawValue)
+        UserDefaults.standard.setValue(nil, forKey: KeychainKeys.expiration_date.rawValue)
+        completion()
+    }
+    
     private func cacheToken(result: AuthResult) throws {
         try keychain.set(result.accessToken, key: KeychainKeys.access_token.rawValue)
         if let refreshToken = result.refreshToken {

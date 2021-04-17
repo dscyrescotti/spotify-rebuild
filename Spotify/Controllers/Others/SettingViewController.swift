@@ -75,7 +75,15 @@ extension SettingViewController {
     }
     
     func signOut() {
-        
+        AuthManager.shared.signOut { [weak self] in
+            DispatchQueue.main.async {
+                let vc = UINavigationController(rootViewController: WelcomeViewController())
+                vc.modalPresentationStyle = .fullScreen
+                self?.present(vc, animated: true, completion: {
+                    self?.navigationController?.popToRootViewController(animated: false)
+                })
+            }
+        }
     }
     
     override func viewDidLayoutSubviews() {
