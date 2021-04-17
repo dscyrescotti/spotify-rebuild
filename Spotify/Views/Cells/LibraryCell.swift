@@ -47,17 +47,17 @@ class LibraryCell: UITableViewCell, BrowseCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         NSLayoutConstraint.activate([
-            playlistCoverView.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
+            playlistCoverView.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 5),
             playlistCoverView.topAnchor.constraint(equalTo: topAnchor, constant: 5),
             playlistCoverView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5),
             playlistCoverView.widthAnchor.constraint(equalToConstant: 70),
             
             playlistTitle.leadingAnchor.constraint(equalTo: playlistCoverView.trailingAnchor, constant: 15),
-            playlistTitle.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
+            playlistTitle.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -5),
             playlistTitle.topAnchor.constraint(equalTo: topAnchor, constant: 15),
             
             creatorName.leadingAnchor.constraint(equalTo: playlistTitle.leadingAnchor),
-            creatorName.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
+            creatorName.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -5),
             creatorName.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -15)
         ])
     }

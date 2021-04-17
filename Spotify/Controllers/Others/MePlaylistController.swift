@@ -1,29 +1,27 @@
 //
-//  LibraryPlaylistViewController.swift
+//  MePlaylistController.swift
 //  Spotify
 //
-//  Created by Dscyre Scotti on 16/04/2021.
+//  Created by Dscyre Scotti on 17/04/2021.
 //
 
 import UIKit
 
-class LibraryPlaylistViewController: UIViewController {
+protocol MePlaylistControllerDelegate {
+    func didChoosePlaylist(_ controller: MePlaylistController, track: AudioTrack, playlist: Playlist)
+}
+
+class MePlaylistController: UIViewController {
     
+    private var selectedTrack: AudioTrack?
     private var playlists: [Playlist] = []
+    var delegate: MePlaylistControllerDelegate?
     
     private let tableView: UITableView = {
         let tableView = UITableView()
         tableView.register(LibraryCell.self, forCellReuseIdentifier: LibraryCell.identifier)
-        tableView.isHidden = true
+        tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
-    }()
-    
-    private let emptyView: EmptyLibraryView = {
-        let view = EmptyLibraryView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.isHidden = true
-        view.configure(text: "You don't have any playlist yet. Create a new playlist.", buttonText: "Create")
-        return view
     }()
 
     override func viewDidLoad() {
@@ -34,13 +32,7 @@ class LibraryPlaylistViewController: UIViewController {
     }
 }
 
-extension LibraryPlaylistViewController: EmptyLibraryViewDelegate {
-    func tappedButton(_ view: EmptyLibraryView) {
-        showAlert()
-    }
-}
-
-extension LibraryPlaylistViewController: UITableViewDelegate, UITableViewDataSource {
+extension MePlaylistController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         playlists.count
     }
@@ -57,37 +49,38 @@ extension LibraryPlaylistViewController: UITableViewDelegate, UITableViewDataSou
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let vc = PlaylistViewController(playlist: playlists[indexPath.item])
-        navigationController?.pushViewController(vc, animated: true)
+        if let track = selectedTrack {
+            delegate?.didChoosePlaylist(self, track: track, playlist: playlists[indexPath.item])
+        }
+        dismiss(animated: true)
     }
 }
 
-extension LibraryPlaylistViewController {
+extension MePlaylistController {
     func setUp() {
         view.backgroundColor = .systemBackground
         
-        emptyView.delegate = self
         tableView.dataSource = self
         tableView.delegate = self
         view.addSubview(tableView)
-        view.addSubview(emptyView)
+        navigationController?.navigationBar.tintColor = .label
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(showAlert))
+        title = "Choose a playlist"
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
         NSLayoutConstraint.activate([
-            emptyView.topAnchor.constraint(equalTo: view.topAnchor),
-            emptyView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            emptyView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            emptyView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ])
-        
-        tableView.frame = view.bounds
     }
     
     func fetchData() {
-        ApiManger.shared.getUserPlaylist { [weak self] result in
+        ApiManger.shared.getMePlaylist { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let model):
@@ -101,14 +94,7 @@ extension LibraryPlaylistViewController {
     }
     
     func updateUI() {
-        if playlists.isEmpty {
-            emptyView.isHidden = false
-            tableView.isHidden = true
-        } else {
-            emptyView.isHidden = true
-            tableView.isHidden = false
-            tableView.reloadData()
-        }
+        tableView.reloadData()
     }
     
     func createPlaylist(name: String) {
@@ -119,7 +105,7 @@ extension LibraryPlaylistViewController {
         }
     }
     
-    func showAlert() {
+    @objc func showAlert() {
         let alert = UIAlertController(title: "Enter playlist name", message: nil, preferredStyle: .alert)
         alert.addTextField { field in
             field.placeholder = "Name"
@@ -130,5 +116,9 @@ extension LibraryPlaylistViewController {
             self?.createPlaylist(name: text)
         }))
         present(alert, animated: true)
+    }
+    
+    func setAudioTrack(track: AudioTrack) {
+        self.selectedTrack = track
     }
 }

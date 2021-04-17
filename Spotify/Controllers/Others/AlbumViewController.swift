@@ -13,6 +13,8 @@ class AlbumViewController: UIViewController {
     private var tracks: [AudioTrack] = []
     private var collectionView: UICollectionView!
     
+    private var saved: Bool?
+    
     init(album: Album) {
         self.album = album
         super.init(nibName: nil, bundle: nil)
@@ -48,7 +50,9 @@ extension AlbumViewController {
         
         view.addSubview(collectionView)
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(tappedShareButton))
+        navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(tappedShareButton))]
+        
+        addGesture()
     }
     
     func fetchData() {
@@ -59,9 +63,53 @@ extension AlbumViewController {
                     case .success(let model):
                         self?.tracks = model.audioTracks
                         self?.collectionView.reloadData()
+                        ApiManger.shared.getSavedAlbum(id: model.id) { result in
+                            DispatchQueue.main.async {
+                                switch result {
+                                case .success(let data):
+                                    self?.saved = data.first
+                                    self?.updateNavItem()
+                                case .failure(let error):
+                                    print(error)
+                                }
+                            }
+                        }
                     case .failure(let error):
                         print(error)
                     }
+                }
+            }
+        }
+    }
+    
+    func updateNavItem() {
+        if let saved = saved {
+            DispatchQueue.main.async {
+                if saved {
+                    self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(self.tappedShareButton)), UIBarButtonItem(image: UIImage(systemName: "heart.fill"), style: .plain, target: self, action: #selector(self.tappedFavorite))]
+                } else {
+                    self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(self.tappedShareButton)), UIBarButtonItem(image: UIImage(systemName: "heart"), style: .plain, target: self, action: #selector(self.tappedFavorite))]
+                }
+            }
+        }
+    }
+    
+    @objc func tappedFavorite() {
+        guard let saved = saved else { return }
+        if saved {
+            ApiManger.shared.unsaveAlbum(id: album.id) { [weak self] success in
+                if success {
+                    NotificationCenter.default.post(name: .ablumNotification, object: nil)
+                    self?.saved = !saved
+                    self?.updateNavItem()
+                }
+            }
+        } else {
+            ApiManger.shared.saveAlbum(id: album.id) { [weak self] success in
+                if success {
+                    NotificationCenter.default.post(name: .ablumNotification, object: nil)
+                    self?.saved = !saved
+                    self?.updateNavItem()
                 }
             }
         }
@@ -124,5 +172,34 @@ extension AlbumViewController: UICollectionViewDataSource, UICollectionViewDeleg
             NSCollectionLayoutBoundarySupplementaryItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(min(view.width, view.height))), elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
         ]
         return section
+    }
+    
+    func addGesture() {
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(longPressGesture))
+        collectionView.isUserInteractionEnabled = true
+        collectionView.addGestureRecognizer(gesture)
+    }
+    
+    @objc func longPressGesture(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        let location = gesture.location(in: collectionView)
+        guard let indexPath = collectionView.indexPathForItem(at: location) else { return }
+        let model = tracks[indexPath.item]
+        let sheet = UIAlertController(title: model.name, message: "Do you want to add this to a playlist?", preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "Add", style: .default, handler: { [weak self] _ in
+            let vc = MePlaylistController()
+            vc.setAudioTrack(track: model)
+            vc.delegate = self
+            let nav = UINavigationController(rootViewController: vc)
+            self?.present(nav, animated: true)
+        }))
+        sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(sheet, animated: true)
+    }
+}
+
+extension AlbumViewController: MePlaylistControllerDelegate {
+    func didChoosePlaylist(_ controller: MePlaylistController, track: AudioTrack, playlist: Playlist) {
+        ApiManger.shared.addTrackToPlaylist(track: track, playlist: playlist) { _ in }
     }
 }

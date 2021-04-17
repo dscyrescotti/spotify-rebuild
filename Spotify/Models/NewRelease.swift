@@ -21,6 +21,13 @@ struct Albums: Codable {
     var total: Int
 }
 
+struct LibraryAlbums: Codable {
+    var items: [Item]
+    struct Item: Codable {
+        var album: Album
+    }
+}
+
 struct Album: Codable {
     var albumType: String
     var artists: [Artist]
@@ -49,6 +56,10 @@ struct Album: Codable {
     
     var headerModel: PlaylistHeaderView.Model {
         .init(name: name, owner: artists.first?.name ?? "Unknown", description: "Release Date: \(DateFormatter.format(releaseDate ?? ""))", artworkURL: URL(string: images.first?.url ?? ""))
+    }
+    
+    var libraryModel: LibraryCell.Model {
+        .init(id: id, name: name, artworkURL: URL(string: images.first?.url ?? ""), creator: artists.first?.name ?? "Unknown")
     }
 }
 

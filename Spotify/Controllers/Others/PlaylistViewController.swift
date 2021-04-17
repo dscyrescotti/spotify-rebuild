@@ -10,6 +10,7 @@ import UIKit
 class PlaylistViewController: UIViewController {
     
     private let playlist: Playlist
+    private var editable: Bool = false
     
     private var collectionView: UICollectionView!
     private var tracks: [AudioTrack] = []
@@ -73,6 +74,7 @@ extension PlaylistViewController {
         view.addSubview(collectionView)
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(tappedShareButton))
+        addGesture()
     }
     
     func fetchData() {
@@ -82,6 +84,7 @@ extension PlaylistViewController {
                     switch result {
                     case .success(let model):
                         self?.tracks = model.tracks.items.map { $0.track }
+                        self?.editable = model.collaborative
                         self?.collectionView.reloadData()
                     case .failure(let error):
                         print(error)
@@ -125,4 +128,48 @@ extension PlaylistViewController {
         vc.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
         present(vc, animated: true)
     }
+    
+    func addGesture() {
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(longPressGesture))
+        collectionView.isUserInteractionEnabled = true
+        collectionView.addGestureRecognizer(gesture)
+    }
+    
+    @objc func longPressGesture(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        let location = gesture.location(in: collectionView)
+        guard let indexPath = collectionView.indexPathForItem(at: location) else { return }
+        let model = tracks[indexPath.item]
+        let sheet = UIAlertController(title: model.name, message: "Do you want to add this to a playlist?", preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "Add", style: .default, handler: { [weak self] _ in
+            let vc = MePlaylistController()
+            vc.setAudioTrack(track: model)
+            vc.delegate = self
+            let nav = UINavigationController(rootViewController: vc)
+            self?.present(nav, animated: true)
+        }))
+        sheet.addAction(UIAlertAction(title: "Remove", style: .default, handler: { [weak self] _ in
+            self?.deleteTrack(track: model, indexPath: indexPath)
+        }))
+        sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(sheet, animated: true)
+    }
+    
+    func deleteTrack(track: AudioTrack, indexPath: IndexPath) {
+        ApiManger.shared.removeTrackFromPlaylist(track: track, playlist: playlist) { [weak self] success in
+            DispatchQueue.main.async {
+                if success {
+                    self?.tracks.remove(at: indexPath.item)
+                    self?.collectionView.deleteItems(at: [indexPath])
+                }
+            }
+        }
+    }
 }
+
+extension PlaylistViewController: MePlaylistControllerDelegate {
+    func didChoosePlaylist(_ controller: MePlaylistController, track: AudioTrack, playlist: Playlist) {
+        ApiManger.shared.addTrackToPlaylist(track: track, playlist: playlist) { _ in }
+    }
+}
+

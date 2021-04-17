@@ -87,6 +87,8 @@ extension SearchResultViewController {
         view.addSubview(collectionView)
         collectionView.delegate = self
         collectionView.dataSource = self
+        
+        addGesture()
     }
     
     override func viewDidLayoutSubviews() {
@@ -103,8 +105,44 @@ extension SearchResultViewController {
         collectionView.isHidden = false
         collectionView.reloadData()
     }
+    
+    
+    func addGesture() {
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(longPressGesture))
+        collectionView.isUserInteractionEnabled = true
+        collectionView.addGestureRecognizer(gesture)
+    }
+    
+    @objc func longPressGesture(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        let location = gesture.location(in: collectionView)
+        guard let indexPath = collectionView.indexPathForItem(at: location) else { return }
+        switch sections[indexPath.section] {
+        case .tracks(let models):
+            let model = models[indexPath.item]
+            let sheet = UIAlertController(title: model.name, message: "Do you want to add this to a playlist?", preferredStyle: .actionSheet)
+            sheet.addAction(UIAlertAction(title: "Add", style: .default, handler: { [weak self] _ in
+                let vc = MePlaylistController()
+                vc.setAudioTrack(track: model)
+                vc.delegate = self
+                let nav = UINavigationController(rootViewController: vc)
+                self?.present(nav, animated: true)
+            }))
+            sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            present(sheet, animated: true)
+        default:
+            break
+        }
+    }
 }
 
+extension SearchResultViewController: MePlaylistControllerDelegate {
+    func didChoosePlaylist(_ controller: MePlaylistController, track: AudioTrack, playlist: Playlist) {
+        ApiManger.shared.addTrackToPlaylist(track: track, playlist: playlist) { _ in }
+    }
+}
+
+    
 extension SearchResultViewController.SearchSection {
     var createLayoutSection: NSCollectionLayoutSection {
         

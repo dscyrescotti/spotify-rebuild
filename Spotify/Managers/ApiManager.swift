@@ -24,6 +24,26 @@ final class ApiManger {
         }
     }
     
+    func getMePlaylist(completion: @escaping (Result<Playlists, Error>) -> Void) {
+        getCurrentUserProfile { result in
+            switch result {
+            case .success(let profile):
+                self.getUserPlaylist { result in
+                    switch result {
+                    case .success(let playlists):
+                        var model = playlists
+                        model.items = playlists.items.filter { $0.owner.uri == profile.uri }
+                        completion(.success(model))
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+    
     func createPlaylist(with name: String, completion: @escaping (Bool) -> Void) {
         getCurrentUserProfile { [weak self] result in
             switch result {
@@ -40,11 +60,21 @@ final class ApiManger {
     }
     
     func addTrackToPlaylist(track: AudioTrack, playlist: Playlist, completion: @escaping (Bool) -> Void) {
-        
+        createRequest(url: URL(string: url(appending: "playlists/\(playlist.id)/tracks")), method: .POST) { request in
+            var urlRequest = request
+            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            urlRequest.httpBody = try? JSONSerialization.data(withJSONObject: ["uris": ["spotify:track:\(track.id)"]], options: .fragmentsAllowed)
+            self.fetchData(request: urlRequest, completion: completion)
+        }
     }
     
     func removeTrackFromPlaylist(track: AudioTrack, playlist: Playlist, completion: @escaping (Bool) -> Void) {
-        
+        createRequest(url: URL(string: url(appending: "playlists/\(playlist.id)/tracks")), method: .DELETE) { request in
+            var urlRequest = request
+            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            urlRequest.httpBody = try? JSONSerialization.data(withJSONObject: ["tracks": [["uri":"spotify:track:\(track.id)"]]], options: .fragmentsAllowed)
+            self.fetchData(request: urlRequest, completion: completion)
+        }
     }
     
     func getSearch(query: String, completion: @escaping (Result<Search, Error>) -> Void) {
@@ -66,8 +96,55 @@ final class ApiManger {
     }
     
     func getPlaylistDetails(playlist: Playlist, completion: @escaping (Result<PlaylistDetails, Error>) -> Void) {
-        createRequest(url: URL(string: url(appending: "playlists/\(playlist.id)")), method: .GET) { request in
-            self.fetchData(PlaylistDetails.self, request: request, completion: completion)
+        getCurrentUserProfile { result in
+            switch result {
+            case .success(let profile):
+                self.createRequest(url: URL(string: self.url(appending: "playlists/\(playlist.id)")), method: .GET) { request in
+                    self.fetchData(PlaylistDetails.self, request: request) { result in
+                        switch result {
+                        case .success(let model):
+                            var details = model
+                            if let owner = model.owner {
+                                details.collaborative = owner.uri == profile.uri
+                            }
+                            completion(.success(details))
+                        case .failure(let error):
+                            completion(.failure(error))
+                        }
+                    }
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    // MARK: - Albums
+    func getUserAlbums(completion: @escaping (Result<LibraryAlbums, Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "me/albums")), method: .GET) { request in
+            self.fetchData(LibraryAlbums.self, request: request, completion: completion)
+        }
+    }
+    
+    func saveAlbum(id: String, completion: @escaping (Bool) -> Void) {
+        createRequest(url: URL(string: url(appending: "me/albums?ids=\(id)")), method: .PUT) { request in
+            var request = request
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            self.fetchData(request: request, completion: completion)
+        }
+    }
+    
+    func unsaveAlbum(id: String, completion: @escaping (Bool) -> Void) {
+        createRequest(url: URL(string: url(appending: "me/albums?ids=\(id)")), method: .DELETE) { request in
+            var request = request
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            self.fetchData(request: request, completion: completion)
+        }
+    }
+    
+    func getSavedAlbum(id: String, completion: @escaping (Result<[Bool], Error>) -> Void) {
+        createRequest(url: URL(string: url(appending: "me/albums/contains?ids=\(id)")), method: .GET) { request in
+            self.fetchData([Bool].self, request: request, completion: completion)
         }
     }
     
@@ -125,12 +202,12 @@ final class ApiManger {
     }
     
     private func fetchData(request: URLRequest, completion: @escaping (Bool) -> Void) {
-        let task = URLSession.shared.dataTask(with: request) { (data, _, error) in
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
             guard let _ = data, error == nil else {
                 completion(false)
                 return
             }
-            completion(true)
+           completion(true)
         }
         task.resume()
     }
@@ -138,6 +215,8 @@ final class ApiManger {
     enum URLMethod: String {
         case GET
         case POST
+        case DELETE
+        case PUT
     }
     
     private func createRequest(url: URL?, method: URLMethod, completion: @escaping (URLRequest) -> Void) {
