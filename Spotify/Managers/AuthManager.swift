@@ -69,10 +69,11 @@ final class AuthManager {
         return currentDate.addingTimeInterval(fiveMins) >= expiredDate
     }
     
+    // MARK: - Add these credentials to run the app
     private struct Credentials {
-        static let clientId = "12068163f4714f308bc2bb649c69e264"
-        static let clientSecret = "8dcafbd92dde4c1ba64149c118698067"
-        static let redirectURI = "https://github.com/dscyrescotti/spotify-rebuild"
+        static let clientId: String = <#your client id#>
+        static let clientSecret: String = <#your client secret#>
+        static let redirectURI: String = <#your redirect uri#>
     }
     
     private struct AuthResult: Codable {

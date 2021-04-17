@@ -119,7 +119,6 @@ final class ApiManger {
         }
     }
     
-    // MARK: - Albums
     func getUserAlbums(completion: @escaping (Result<LibraryAlbums, Error>) -> Void) {
         createRequest(url: URL(string: url(appending: "me/albums")), method: .GET) { request in
             self.fetchData(LibraryAlbums.self, request: request, completion: completion)
